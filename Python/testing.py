@@ -1,67 +1,84 @@
-import pyqtgraph as pg
+
+from pyqtgraph.Qt import QtCore, QtGui
 import pyqtgraph.opengl as gl
+import pyqtgraph as pg
 import numpy as np
-from pyqtgraph.Qt import QtCore,QtGui
+import csv
 
-import Tkinter
 
-class Window(QtGui.QWidget):
-        def __init__(self):
-            QtGui.QWidget.__init__(self)
-#Create the widgets here
-            #Start button widget
-            self.start = QtGui.QPushButton('Start',self)
-            self.start.clicked.connect(self.handleStart)
+app = QtGui.QApplication([])
+w = gl.GLViewWidget()
+w.opts['distance'] = 40
+w.show()
+w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
 
-            #Instructions button widget
-            self.instructions = QtGui.QPushButton('Instructions',self)
-            self.instructions.clicked.connect(self.handleInstructions)
+#Scan the CSV file, and set the highest Value to X, Y and D to scale the plot
+#The XYZ values will scale equally
+maxValue = 10 #This value will be taken from a max value in the CSV file
+setX = maxValue
+setY = maxValue
+setZ = maxValue
 
-            #Debug Log Button Widget
-            self.debug = QtGui.QPushButton('Debug Log',self)
-            self.debug.clicked.connect(self.handleDebug)
+#test = gl.GLAxisItem()
+#test.setSize(x = setX,y = setY,z = setZ)
+#w.addItem(test)
 
-            #Version button widget
-            self.version = QtGui.QPushButton('Version',self)
-            self.version.clicked.connect(self.handleVersion)
-                                              
-#Layout manager of the widgets           
-            layout = QtGui.QGridLayout()
-            self.setLayout(layout)
-            layout.addWidget(self.start, 0, 0)          ##Start button
-            layout.addWidget(self.instructions, 1 , 0)  ## Instructions button
-            layout.addWidget(self.debug, 2, 0)          ##Debug button
-            layout.addWidget(self.version, 3, 0)        ##Version button
+#X Grid adjustments
+xgrid = gl.GLGridItem()
+xgrid.rotate(90, 0, 1, 0)
+xgrid.translate(0*setX, 10*setY, 10*setZ) # ( X translates X, Y trans Y, Z trans Z 
+xgrid.scale(setZ,setX,setY) #xGrid scaling
+
+w.addItem(xgrid)
+
+#Y grid adjustments
+ygrid = gl.GLGridItem()
+ygrid.rotate(90,0, 0, 1)
+ygrid.translate(10*setY, 10*setX, 0*setZ) # ( Y trans X, X trans Y, Z trans Z)
+ygrid.scale(setX,setY,setZ) #yGrid scaling
+w.addItem(ygrid)
+
+#Z grid adjustments
+zgrid = gl.GLGridItem()
+zgrid.rotate(90,1,0,0)
+zgrid.translate(10*setZ, 0*setX, 10*setY) # (Z trans X, X trans Y, Y trans Z)
+zgrid.scale(setY,setZ,setX) # zGrid scaling
+w.addItem(zgrid)
+
+
+#Note: the rotations and translate values presented right now
+# Make the first point land at (0,0,0)
+#Goal: To make the axis scale as we continue plotting
+
+#def fn(x, y):
+#    return np.cos((x**2 + y**2)**0.5)
+
+#data1=list()
+#data2=list()
+#data3=list()
+#with open('Test.csv','rU') as csvDataFile:
+#    csvReader = csv.reader(csvDataFile)
+#    for row in csvReader:
+#        if float(row[0]) == 0:
+#            print float(row[0])
             
-            
-#Widget event handling
-        #This is the event handing for the start button
-        #The start button will be pressed and then the connection,
-        #and starting of the program will be here
-        def handleStart(self): 
-            print('Welcome to the SMART Glove')
-            print('Plz connect Glove via Bluetooth')
-     
-        #Instructions button event handling
-        def handleInstructions(self):
-            print('Here are some steps to begin')
-            print('Gucci Gang')
+#        data1.append(float(row[0]))
+#        data2.append(float(row[1]))
+#        data3.append(float(row[2]))
 
-        #Debug Log button event handling
-        def handleDebug(self):
-            print('This is the debug log')
+#n = 500
+#x = data1
+#y = data2
+#z = data3
+#pts = np.vstack([x,y,z]).transpose()
+#plt = gl.GLLinePlotItem(pos=pts, color=pg.glColor((1,n*1.3)), width=100., antialias=True)
+#w.addItem(plt)
 
-        def handleVersion(self):
-            print('SMART GLOVE Version: Alpha 0.1.0')
-    
 
-if __name__ == '__main__': #Inititation code
+
+## Start Qt event loop unless running in interactive mode.
+if __name__ == '__main__':
     import sys
+    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()
 
-    app = QtGui.QApplication(sys.argv)
- 
-    w = Window()
-    w.show()
-    sys.exit(app.exec_())
-
-        

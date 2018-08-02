@@ -19,17 +19,8 @@ w = QtGui.QWidget()
 ## Create some widgets to be placed inside
 strt = QtGui.QPushButton('Start') #Creates the Start button
 #Insert start button action
-strt.setCheckable(True)
-strt.toggle()
-strt.clicked.connect(self.btnstate)
 
 #This is a test to see if button states work correctly
-def btnstate(self):
-    if self.strt.isChecked():
-        print "Gucci"
-    else:
-        print "Gang"
-        
 
 instr = QtGui.QPushButton('Instructions') #Creates the Instructions button
 #Insert intructions button action
