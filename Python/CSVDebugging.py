@@ -1,0 +1,6 @@
+fi = open('IMUData.csv', 'rb')
+data = fi.read()
+fi.close()
+fo = open('IMUTestData.csv', 'wb')
+fo.write(data.replace('\x00', ''))
+fo.close()
