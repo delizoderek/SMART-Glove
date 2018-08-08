@@ -6,13 +6,21 @@ import time
 count = 0
 start = 0.0
 end = 0.0
-ser = serial.Serial("COM11",9600)
+TOUT = 10
+ser = serial.Serial("COM11",9600,timeout = TOUT)
 print "Connected"
-ser.write("Ready for data")
+ser.write("g")
 print "Sent Connection Call"
+print "Calibrating"
+var = 'c';
+while var != 'd':
+    var = ser.read()
+    
 recordedData = []
 start = time.time()
-while (end - start) <= 40.0:
+print "Out of while loop"
+
+while (end - start) <= 70.0:
     dataIn = []
     val = ser.read(1)
     while val != '_':

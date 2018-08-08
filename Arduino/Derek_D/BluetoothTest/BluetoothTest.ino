@@ -17,7 +17,10 @@ float samples;
 int baudrate = 9600;
 int i = 0;
 bool isLinked;
-bool isCalibrated;
+bool isCalibrating;
+bool isTransmitting;
+bool originaTap;
+int pressStrength;
 SoftwareSerial mySerial(2, 3);
 
 void setup()
@@ -28,52 +31,38 @@ void setup()
   accelgyro.initialize();
   Serial.println("Testing Connections");
   Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
-  isLinked = false;
-  isCalibrated = false;
-  samples = 1100;
+  isTransmitting = false;
+  isCalibrating = false;
+  samples = 500;
 }
 
 void loop()
 {
-  if (isLinked & isCalibrated) {
+  if (isTransmitting) {
+    //mySerial.write("A");
     SendData();
   }
 
-  if (isCalibrated == false) {
+  if (isCalibrating) {
     if (samples <= 0) {
-      xAccelOff /= 1000;
-      yAccelOff /= 1000;
-      zAccelOff /= 1000;
-      xGyroOff /= 1000;
-      yGyroOff /= 1000;
-      zGyroOff /= 1000;
-      isCalibrated = true;
       Serial.println("Calibration Complete");
-      Serial.print("AX Offset: " + String(AcX));
-      Serial.print(" AY Offset: " + String(AcY));
-      Serial.print(" AZ Offset: " + String(AcZ));
-      Serial.print(" GX Offset: " + String(GyX));
-      Serial.print(" GY Offset: " + String(GyY));
-      Serial.println(" GZ Offset: " + String(GyZ) + "\n \n");
-    } else  if (samples < 1000) {
-      Serial.println("Collecting Samples");
-      Serial.println("Samples Collected so far: " + String(1000 - samples));
-      accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
-      xAccelOff += AcX;
-      yAccelOff += AcY;
-      zAccelOff += AcZ;
-      xGyroOff += GyX;
-      yGyroOff += GyY;
-      zGyroOff += GyZ;
-      samples--;
+      mySerial.write('d');
+      isTransmitting = true;
+      isCalibrating = false;
     } else {
       samples--;
+      Serial.println(samples);
+      mySerial.write('c');
     }
   }
 
   if (mySerial.available()) {
-    Serial.println("Connected");
-    isLinked = true;
+    char in = mySerial.read();
+    if (in == 'g') {
+      Serial.println("Connected");
+      mySerial.write('c');
+      isCalibrating = true;
+    }
   }
 
   delay(10);
@@ -81,12 +70,14 @@ void loop()
 
 void SendData() {
   float AcXCal, AcYCal, AcZCal, GyXCal, GyYCal, GyZCal;
-  AcXCal = (AcX - xAccelOff) / 16384.0;
-  AcYCal = (AcY - yAccelOff) / 16384.0;
-  AcZCal = (AcZ - zAccelOff) / 16384.0;
-  GyXCal = (GyX - xGyroOff) / 131.0;
-  GyYCal = (GyY - yGyroOff) / 131.0;
-  GyZCal = (GyZ - zGyroOff) / 131.0;
+  accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
+  accelgyro.resetFIFO();
+  AcXCal = AcX - xAccelOff;
+  AcYCal = AcY - yAccelOff;
+  AcZCal = AcZ - zAccelOff;
+  GyXCal = GyX - xGyroOff;
+  GyYCal = GyY - yGyroOff;
+  GyZCal = GyZ - zGyroOff;
   String data = String(AcXCal) + "," + String(AcYCal) + "," + String(AcZCal) + "," + String(GyXCal) + "," + String(GyYCal) + "," + String(GyZCal) + "_";
   int bufLength = data.length() + 1;
   char dataBuff[bufLength];
