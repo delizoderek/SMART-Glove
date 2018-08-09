@@ -114,18 +114,18 @@ class Window(QtGui.QWidget):
 
             self.pts = np.vstack([self.x,self.y,self.z]).transpose()
             self.plt = gl.GLLinePlotItem(pos=self.pts, color=pg.glColor((1,n*1.3)), width=10., antialias=True)
-
-            self.plot.addItem(self.plt)
+        
+            self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
             
 ##### Layout manager of the widgets #####          
             layout = QtGui.QGridLayout()
             self.setLayout(layout)
             layout.addWidget(self.start, 0, 0, 1, 2)          ## Start button
             layout.addWidget(self.instructions, 1 , 0, 1, 2)  ## Instructions button
-            layout.addWidget(self.debug, 2, 0, 1 , 2)          ## Debug button
+            layout.addWidget(self.debug, 2, 0, 1 , 2)         ## Debug button
             layout.addWidget(self.version, 3, 0, 1, 2)        ## Version button
             layout.addWidget(self.tapData,4, 0, 1, 2)         ## tapData text display
-            layout.addWidget(self.plot, 0, 6, 6, 6)     #3D Plotting
+            layout.addWidget(self.plot, 0, 6, 6, 6)           ##3D Plotting
             
             
 ##### Widget event handling #####
