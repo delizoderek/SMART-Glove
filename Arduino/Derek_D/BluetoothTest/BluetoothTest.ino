@@ -12,7 +12,7 @@ MPU6050 accelgyro;
 
 const int MPU_addr = 0x68; // I2C address of the MPU-6050
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
-int16_t xAccelOff, yAccelOff, zAccelOff, xGyroOff, yGyroOff, zGyroOff;
+float AcXCal, AcYCal, AcZCal, GyXCal, GyYCal, GyZCal;
 float samples;
 int baudrate = 9600;
 int i = 0;
@@ -21,6 +21,7 @@ bool isCalibrating;
 bool isTransmitting;
 bool originaTap;
 int pressStrength;
+int countdown;
 SoftwareSerial mySerial(2, 3);
 
 void setup()
@@ -33,22 +34,52 @@ void setup()
   Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
   isTransmitting = false;
   isCalibrating = false;
-  samples = 500;
+  samples = 100;
+  countdown = 5;
+  pinMode(6, OUTPUT);
 }
 
 void loop()
 {
   if (isTransmitting) {
-    //mySerial.write("A");
-    SendData();
+    if (countdown <= 0) {
+      digitalWrite(6, LOW);
+      AcXCal /= 5;
+      AcYCal /= 5;
+      AcZCal /= 5;
+      GyXCal /= 5;
+      GyYCal /= 5;
+      GyZCal /= 5;
+      SendData();
+      AcXCal = 0;
+      AcYCal = 0;
+      AcZCal = 0;
+      GyXCal = 0;
+      GyYCal = 0;
+      GyZCal = 0;
+      countdown = 5;
+    } else {
+      accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
+      accelgyro.resetFIFO();
+      AcXCal += AcX;
+      AcYCal += AcY;
+      AcZCal += AcZ;
+      GyXCal += GyX;
+      GyYCal += GyY;
+      GyZCal += GyZ;
+      countdown--;
+    }
   }
 
+  
+  
   if (isCalibrating) {
     if (samples <= 0) {
       Serial.println("Calibration Complete");
       mySerial.write('d');
       isTransmitting = true;
       isCalibrating = false;
+      digitalWrite(6, HIGH);
     } else {
       samples--;
       Serial.println(samples);
@@ -65,19 +96,10 @@ void loop()
     }
   }
 
-  delay(10);
+  delay(333);
 }
 
 void SendData() {
-  float AcXCal, AcYCal, AcZCal, GyXCal, GyYCal, GyZCal;
-  accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
-  accelgyro.resetFIFO();
-  AcXCal = AcX - xAccelOff;
-  AcYCal = AcY - yAccelOff;
-  AcZCal = AcZ - zAccelOff;
-  GyXCal = GyX - xGyroOff;
-  GyYCal = GyY - yGyroOff;
-  GyZCal = GyZ - zGyroOff;
   String data = String(AcXCal) + "," + String(AcYCal) + "," + String(AcZCal) + "," + String(GyXCal) + "," + String(GyYCal) + "," + String(GyZCal) + "_";
   int bufLength = data.length() + 1;
   char dataBuff[bufLength];

@@ -30,13 +30,13 @@ class IMUPlot:
         zPos = self.getPosition(time,velZ,butter3Shift)
 
         plt.subplot(331)
-        plt.plot(butter1Shift)
+        plt.plot(time,butter1Shift)
         plt.title("X Acceleration")
         plt.subplot(332)
-        plt.plot(butter2Shift)
+        plt.plot(time,butter2Shift)
         plt.title("Y Acceleration")
         plt.subplot(333)
-        plt.plot(butter3Shift)
+        plt.plot(time,butter3Shift)
         plt.title("Z Acceleration")
         plt.subplot(334)
         plt.plot(time,velX)
@@ -60,22 +60,26 @@ class IMUPlot:
 
                 
     def filterData(self):
-        b,a = signal.butter(3,0.5,analog = False)
-        butter1 = (signal.filtfilt(b,a,self.data1))
-        butter2 = (signal.filtfilt(b,a,self.data2))
-        butter3 = (signal.filtfilt(b,a,self.data3))
-
-        butter1 = [(x - self.xShift)/16384 for x in butter1]
-        butter1Shift = [(x/x) - 1 if (abs(x) < self.xBound) else x for x in butter1]
-
-        ## butter1Shift = runningAverage(butter1Shift)
-
-        butter2 = [(y - self.yShift)/-16384 for y in butter2]
-        butter2Shift = [(y/y) - 1 if (abs(y) < self.yBound) else y for y in butter2]
-
-        butter3 = [(z - self.zShift)/-16384 for z in butter3]
-        butter3Shift = [(z/z) - 1 if (abs(z) < self.zBound) else z for z in butter3]
-
+        ##b,a = signal.butter(3,0.5,analog = False)
+##        b = [1,-1]
+##        a = [1,0.9]
+##        butter1 = (signal.filtfilt(b,a,self.data1))
+##        butter2 = (signal.filtfilt(b,a,self.data2))
+##        butter3 = (signal.filtfilt(b,a,self.data3))
+##
+##        butter1 = [(x - self.xShift)/16384 for x in butter1]
+##        butter1Shift = [(x/x) - 1 if (abs(x) < self.xBound) else x for x in butter1]
+##
+##        ## butter1Shift = runningAverage(butter1Shift)
+##
+##        butter2 = [(y - self.yShift)/-16384 for y in butter2]
+##        butter2Shift = [(y/y) - 1 if (abs(y) < self.yBound) else y for y in butter2]
+##
+##        butter3 = [(z - self.zShift)/-16384 for z in butter3]
+##        butter3Shift = [(z/z) - 1 if (abs(z) < self.zBound) else z for z in butter3]
+        butter1Shift = self.data1;
+        butter2Shift = self.data2;
+        butter3Shift = self.data3;
         return butter1Shift, butter2Shift, butter3Shift
     
     def runningAverage(self,noisyData):
@@ -154,5 +158,5 @@ with open('IMUData.csv','rb') as csvDataFile:
         data2.append(float(row[1]))
         data3.append(float(row[2]))
 
-dp = IMUPlot(data1,data2,data3,70.0)
+dp = IMUPlot(data1,data2,data3,40.0)
 dp.plotData()

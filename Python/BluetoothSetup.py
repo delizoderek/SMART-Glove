@@ -20,7 +20,7 @@ recordedData = []
 start = time.time()
 print "Out of while loop"
 
-while (end - start) <= 70.0:
+while (end - start) <= 10.0:
     dataIn = []
     val = ser.read(1)
     while val != '_':
