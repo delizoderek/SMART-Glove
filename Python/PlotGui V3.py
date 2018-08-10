@@ -19,7 +19,13 @@ import Tkinter
 
 ############### Main window class: What holds all the widgets ###############
 class Window(QtGui.QWidget):
-        def __init__(self, parent=None): 
+        def __init__(self, parent=None):
+            self.x = list()
+            self.y = list()
+            self.z = list()
+            self.initialize()
+
+        def initialize(self):
             QtGui.QWidget.__init__(self)
             self.setMinimumSize(700,500) 
             self.setMaximumSize(700,500)
@@ -30,6 +36,10 @@ class Window(QtGui.QWidget):
             self.start = QtGui.QPushButton('Start',self)
             self.start.clicked.connect(self.handleStart)
 
+                # Update Plot widget
+            self.updatePlot = QtGui.QPushButton('Update Plot',self)
+            self.updatePlot.clicked.connect(self.handleUpdate)
+            
                 # Instructions button widget
             self.instructions = QtGui.QPushButton('Instructions')
             self.instructions.clicked.connect(self.handleInstructions)
@@ -57,6 +67,65 @@ class Window(QtGui.QWidget):
                 # Plot actions/test
                 
                 #Code Reads from CSV, and creates data points
+             #Code to collect max values from csv
+
+            #create Axis
+            sca = 60    
+            n = sca/20    
+            self.axis = gl.GLAxisItem()
+            self.axis.setSize(x = sca,y = sca,z = sca)
+            self.plot.addItem(self.axis)
+            
+            #X grid
+            self.xgrid = gl.GLGridItem()
+            self.xgrid.rotate(90, 0, 1, 0)
+            self.xgrid.translate(0*n, 10*n, 10*n) # ( X translates X, Y trans Y, Z trans Z 
+            self.xgrid.scale(n,n,n) #xGrid scaling
+            self.plot.addItem(self.xgrid)
+            
+            # Y Grid
+            self.ygrid = gl.GLGridItem()
+            self.ygrid.rotate(90,0, 0, 1)
+            self.ygrid.translate(10*n, 10*n, 0*n) # ( Y trans X, X trans Y, Z trans Z)
+            self.ygrid.scale(n,n,n) #yGrid scaling
+            self.plot.addItem(self.ygrid)
+
+            # Z Grid
+            self.zgrid = gl.GLGridItem()
+            self.zgrid.rotate(90,1,0,0)
+            self.zgrid.translate(10*n, 0*n, 10*n) # (Z trans X, X trans Y, Y trans Z)
+            self.zgrid.scale(n,n,n) # zGrid scaling
+            self.plot.addItem(self.zgrid)
+
+            self.pts = np.vstack([0,0,0]).transpose()
+            self.plt = gl.GLLinePlotItem(pos=self.pts, color=pg.glColor((1,n*1.3)), width=10., antialias=True)
+        
+            self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
+            
+##### Layout manager of the widgets #####          
+            layout = QtGui.QGridLayout()
+            self.setLayout(layout)
+            layout.addWidget(self.start, 0, 0, 1, 2)          ## Start button
+            layout.addWidget(self.updatePlot, 1, 0, 1, 2)
+            layout.addWidget(self.instructions, 2 , 0, 1, 2)  ## Instructions button
+            layout.addWidget(self.debug, 3, 0, 1 , 2)         ## Debug button
+            layout.addWidget(self.version, 4, 0, 1, 2)        ## Version button
+            layout.addWidget(self.tapData, 5, 0, 1, 2)         ## tapData text display
+            layout.addWidget(self.plot, 0, 6, 6, 6)           ##3D Plotting
+            
+            
+##### Widget event handling #####
+            # This is the event handing for the start button
+                             
+        def handleStart(self):
+            #This will reinitialize the plot and data points    
+            self.plot.removeItem(self.xgrid)
+            self.plot.removeItem(self.ygrid)
+            self.plot.removeItem(self.zgrid)
+            self.plot.removeItem(self.axis)
+            self.plot.removeItem(self.plt)
+        
+            #Code Reads from CSV, and creates data points
             data1 = list()
             data2 = list()
             data3 = list()
@@ -116,25 +185,80 @@ class Window(QtGui.QWidget):
             self.plt = gl.GLLinePlotItem(pos=self.pts, color=pg.glColor((1,n*1.3)), width=10., antialias=True)
         
             self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
+    
             
-##### Layout manager of the widgets #####          
-            layout = QtGui.QGridLayout()
-            self.setLayout(layout)
-            layout.addWidget(self.start, 0, 0, 1, 2)          ## Start button
-            layout.addWidget(self.instructions, 1 , 0, 1, 2)  ## Instructions button
-            layout.addWidget(self.debug, 2, 0, 1 , 2)         ## Debug button
-            layout.addWidget(self.version, 3, 0, 1, 2)        ## Version button
-            layout.addWidget(self.tapData,4, 0, 1, 2)         ## tapData text display
-            layout.addWidget(self.plot, 0, 6, 6, 6)           ##3D Plotting
+            # Update Plot button event handling
+        def handleUpdate(self):
+            #This will reinitialize the plot and data points    
+            self.plot.removeItem(self.xgrid)
+            self.plot.removeItem(self.ygrid)
+            self.plot.removeItem(self.zgrid)
+            self.plot.removeItem(self.axis)
+            self.plot.removeItem(self.plt)
             
+            #Code Reads from CSV, and creates data points
+            data1 = list()
+            data2 = list()
+            data3 = list()
+            with open('Test.csv','rU') as csvDataFile:
+                csvReader = csv.reader(csvDataFile)
+                for row in csvReader:
+                    if float(row[0]) == 0:
+                        print float(row[0])
+                        
+                    data1.append(float(row[0]))
+                    data2.append(float(row[1]))
+                    data3.append(float(row[2]))
+        
+            #Code to collect max values from csv
+            data1.reverse()
+            max1 = max(data1)
+            max2 = max(data2)
+            max3 = max(data3)
+            max4 = max(max1, max2, max3)
+            n = 500
+            self.x = data1
+            self.y = data2
+            self.z = data3
             
-##### Widget event handling #####
-            # This is the event handing for the start button
-        def handleStart(self): 
-            print('Welcome to the SMART Glove')
-            print('Plz connect Glove via Bluetooth')
-     
-            # I nstructions button event handling
+            #For plot scaling
+            maxValue = max4/20
+            setX = maxValue
+            setY = maxValue
+            setZ = maxValue
+
+            #create Axis
+            self.axis = gl.GLAxisItem()
+            self.axis.setSize(x = max4,y = max4,z = max4)
+            self.plot.addItem(self.axis)
+            
+            #X grid
+            self.xgrid = gl.GLGridItem()
+            self.xgrid.rotate(90, 0, 1, 0)
+            self.xgrid.translate(0*setX, 10*setY, 10*setZ) # ( X translates X, Y trans Y, Z trans Z 
+            self.xgrid.scale(setZ,setX,setY) #xGrid scaling
+            self.plot.addItem(self.xgrid)
+            
+            # Y Grid
+            self.ygrid = gl.GLGridItem()
+            self.ygrid.rotate(90,0, 0, 1)
+            self.ygrid.translate(10*setY, 10*setX, 0*setZ) # ( Y trans X, X trans Y, Z trans Z)
+            self.ygrid.scale(setX,setY,setZ) #yGrid scaling
+            self.plot.addItem(self.ygrid)
+
+            # Z Grid
+            self.zgrid = gl.GLGridItem()
+            self.zgrid.rotate(90,1,0,0)
+            self.zgrid.translate(10*setZ, 0*setX, 10*setY) # (Z trans X, X trans Y, Y trans Z)
+            self.zgrid.scale(setY,setZ,setX) # zGrid scaling
+            self.plot.addItem(self.zgrid)
+
+            self.pts = np.vstack([self.x,self.y,self.z]).transpose()
+            self.plt = gl.GLLinePlotItem(pos=self.pts, color=pg.glColor((1,n*1.3)), width=10., antialias=True)
+        
+            self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
+            
+            # Instructions button event handling
         def handleInstructions(self):
             self.instrucWindow.show() #This will open the instructions window
             
@@ -150,6 +274,10 @@ class Window(QtGui.QWidget):
 ############### Addional classes that are used ###############
             
 ##### Insert Start class for actions here #####
+class Start(QtGui.QWidget):
+        def __init__(self, parent=None):
+            QtGui.QWidget.__init__(self)
+##### Insert Update Plot class #####
             
 ##### Instructions class to open new window and display instructions #####           
 class Instruc(QtGui.QWidget):
