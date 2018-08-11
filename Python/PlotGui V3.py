@@ -60,27 +60,32 @@ class Window(QtGui.QWidget):
             data1 = list()
             data2 = list()
             data3 = list()
-            with open('Test.csv','rU') as csvDataFile:
-                csvReader = csv.reader(csvDataFile)
-                for row in csvReader:
-                    if float(row[0]) == 0:
-                        print float(row[0])
-                        
-                    data1.append(float(row[0]))
-                    data2.append(float(row[1]))
-                    data3.append(float(row[2]))
-
-            #Code to collect max values from csv
-            max1 = max(data1)
-            max2 = max(data2)
-            max3 = max(data3)
-            max4 = max(max1, max2, max3)
-            n = 500
-            self.x = data1
-            self.y = data2
-            self.z = data3
-            
+##            with open('Test.csv','rU') as csvDataFile:
+##                csvReader = csv.reader(csvDataFile)
+##                for row in csvReader:
+##                    if float(row[0]) == 0:
+##                        print float(row[0])
+##                        
+##                    data1.append(float(row[0]))
+##                    data2.append(float(row[1]))
+##                    data3.append(float(row[2]))
+##
+##            #Code to collect max values from csv
+##            max1 = max(data1)
+##            max2 = max(data2)
+##            max3 = max(data3)
+##            max4 = max(max1, max2, max3)
+##            n = 500
+##            self.x = data1
+##            self.y = data2
+##            self.z = data3
+##            
             #For plot scaling
+            n = 500
+            self.x = data1.append(0)
+            self.y = data2.append(0)
+            self.z = data3.append(0)
+            max4 = 40
             maxValue = max4/20
             setX = maxValue
             setY = maxValue
@@ -88,6 +93,7 @@ class Window(QtGui.QWidget):
 
             #create Axis
             self.axis = gl.GLAxisItem()
+##            self.axis.setSize(x = max4,y = max4,z = max4)
             self.axis.setSize(x = max4,y = max4,z = max4)
             self.plot.addItem(self.axis)
             

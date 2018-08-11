@@ -19,6 +19,7 @@ int i = 0;
 bool isLinked;
 bool isCalibrating;
 bool isTransmitting;
+bool xCal;
 bool originaTap;
 int pressStrength;
 int countdown;
@@ -34,14 +35,16 @@ void setup()
   Serial.println(accelgyro.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
   isTransmitting = false;
   isCalibrating = false;
-  samples = 100;
+  samples = 400;
   countdown = 5;
+  xCal = false;
   pinMode(6, OUTPUT);
 }
 
 void loop()
 {
   if (isTransmitting) {
+    Serial.println("Should not be Here");
     if (countdown <= 0) {
       digitalWrite(6, LOW);
       AcXCal /= 5;
@@ -50,7 +53,7 @@ void loop()
       GyXCal /= 5;
       GyYCal /= 5;
       GyZCal /= 5;
-      SendData();
+      SendData(AcXCal, AcYCal, AcZCal, GyXCal, GyYCal, GyZCal);
       AcXCal = 0;
       AcYCal = 0;
       AcZCal = 0;
@@ -71,36 +74,54 @@ void loop()
     }
   }
 
-  
-  
+
   if (isCalibrating) {
+    Serial.println("Made it Here");
     if (samples <= 0) {
       Serial.println("Calibration Complete");
       mySerial.write('d');
-      isTransmitting = true;
+      //isTransmitting = true;
       isCalibrating = false;
       digitalWrite(6, HIGH);
+    } else if (samples <= 500) {
+      Serial.println("Calibration Step   Samples: " + String(samples));
+      accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
+      accelgyro.resetFIFO();
+      SendData(AcX, AcY, AcZ, GyX, GyY, GyZ);
+      samples--;
     } else {
       samples--;
       Serial.println(samples);
-      mySerial.write('c');
+      //mySerial.write('c');
     }
   }
 
   if (mySerial.available()) {
     char in = mySerial.read();
-    if (in == 'g') {
-      Serial.println("Connected");
-      mySerial.write('c');
-      isCalibrating = true;
+    switch (in) {
+      case 'c':
+        Serial.println("Preparing Data");
+        isCalibrating = true;
+        samples = 400;
+        isTransmitting = false;
+        break;
+      case 't':
+        Serial.println("Transmitting Data");
+        isTransmitting = true;
+        isCalibrating = false;
+        break;
+      default:
+        isTransmitting = false;
+        isCalibrating = false;
+        break;
     }
   }
 
-  delay(333);
+  delay(50);
 }
 
-void SendData() {
-  String data = String(AcXCal) + "," + String(AcYCal) + "," + String(AcZCal) + "," + String(GyXCal) + "," + String(GyYCal) + "," + String(GyZCal) + "_";
+void SendData(float Ax, float Ay, float Az, float Gx, float Gy, float Gz) {
+  String data = String(Ax) + "," + String(Ay) + "," + String(Az) + "," + String(Gx) + "," + String(Gy) + "," + String(Gz) + "_";
   int bufLength = data.length() + 1;
   char dataBuff[bufLength];
   data.toCharArray(dataBuff, bufLength);
