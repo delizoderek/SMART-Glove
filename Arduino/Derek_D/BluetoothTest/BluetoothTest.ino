@@ -20,9 +20,11 @@ bool isLinked;
 bool isCalibrating;
 bool isTransmitting;
 bool xCal;
-bool originaTap;
+int atOrigin;
 int pressStrength;
 int countdown;
+int buttonState = 0;
+int fingerTap = 0;
 SoftwareSerial mySerial(2, 3);
 
 void setup()
@@ -37,16 +39,21 @@ void setup()
   isCalibrating = false;
   samples = 400;
   countdown = 5;
+  atOrigin = 0;
   xCal = false;
-  pinMode(6, OUTPUT);
+  pinMode(7, INPUT_PULLUP);
 }
 
 void loop()
 {
+  //buttonState = digitalRead(7);
+//  if(!(buttonState == LOW)){
+//    atOrigin = 1;
+//  }
+  
   if (isTransmitting) {
-    Serial.println("Should not be Here");
     if (countdown <= 0) {
-      digitalWrite(6, LOW);
+      digitalWrite(6, HIGH);
       AcXCal /= 5;
       AcYCal /= 5;
       AcZCal /= 5;
@@ -60,6 +67,8 @@ void loop()
       GyXCal = 0;
       GyYCal = 0;
       GyZCal = 0;
+      atOrigin = 0;
+      fingerTap = 0;
       countdown = 5;
     } else {
       accelgyro.getMotion6(&AcX, &AcY, &AcZ, &GyX, &GyY, &GyZ);
@@ -74,7 +83,8 @@ void loop()
     }
   }
 
-
+  
+  
   if (isCalibrating) {
     Serial.println("Made it Here");
     if (samples <= 0) {
@@ -97,6 +107,7 @@ void loop()
   }
 
   if (mySerial.available()) {
+    Serial.println("GO");
     char in = mySerial.read();
     switch (in) {
       case 'c':
@@ -110,7 +121,8 @@ void loop()
         isTransmitting = true;
         isCalibrating = false;
         break;
-      default:
+      case 'd':
+        Serial.println("Done");
         isTransmitting = false;
         isCalibrating = false;
         break;
@@ -121,7 +133,7 @@ void loop()
 }
 
 void SendData(float Ax, float Ay, float Az, float Gx, float Gy, float Gz) {
-  String data = String(Ax) + "," + String(Ay) + "," + String(Az) + "," + String(Gx) + "," + String(Gy) + "," + String(Gz) + "_";
+  String data = String(Ax) + "," + String(Ay) + "," + String(Az) + "," + String(Gx) + "," + String(Gy) + "," + String(Gz) + "," + String(atOrigin) + "," + String(fingerTap) + "_";
   int bufLength = data.length() + 1;
   char dataBuff[bufLength];
   data.toCharArray(dataBuff, bufLength);

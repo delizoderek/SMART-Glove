@@ -3,6 +3,7 @@ import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt
 import csv
+from IMU import IMU
 
 class IMUPlot:
 
@@ -19,68 +20,38 @@ class IMUPlot:
         self.dt = dTime
 
     def plotData(self):
-        butter1Shift,butter2Shift,butter3Shift = self.filterData()
+        ##accelX,accelY,accelZ = self.filterData()
         
-        time, velX = self.getVelocity(butter1Shift,self.dt)
-        time, velY = self.getVelocity(butter2Shift,self.dt)
-        time, velZ = self.getVelocity(butter3Shift,self.dt)
+        #time, velX = self.getVelocity(accelX,self.dt)
+        #time, velY = self.getVelocity(accelY,self.dt)
+        #time, velZ = self.getVelocity(accelZ,self.dt)
 
-        xPos = self.getPosition(time,velX,butter1Shift)
-        yPos = self.getPosition(time,velY,butter2Shift)
-        zPos = self.getPosition(time,velZ,butter3Shift)
+        #xPos = self.getPosition(time,velX,butter1Shift)
+        #yPos = self.getPosition(time,velY,butter2Shift)
+        #zPos = self.getPosition(time,velZ,butter3Shift)
 
-        plt.subplot(331)
-        plt.plot(time,butter1Shift)
-        plt.title("X Acceleration")
-        plt.subplot(332)
-        plt.plot(time,butter2Shift)
-        plt.title("Y Acceleration")
-        plt.subplot(333)
-        plt.plot(time,butter3Shift)
-        plt.title("Z Acceleration")
-        plt.subplot(334)
-        plt.plot(time,velX)
-        plt.title("X Velocity")
-        plt.subplot(335)
-        plt.plot(time,velY)
-        plt.title("Y Velocity")
-        plt.subplot(336)
-        plt.plot(time,velZ)
-        plt.title("Z Velocity")
-        plt.subplot(337)
-        plt.plot(time, xPos)
-        plt.title("X position")
-        plt.subplot(338)
-        plt.plot(time, yPos)
-        plt.title("Y Position")
-        plt.subplot(339)
-        plt.plot(time, zPos)
-        plt.title("Z Position")
+        plt.subplot(131)
+        plt.plot(self.data1)
+        plt.subplot(132)
+        plt.plot(self.data2)
+        plt.subplot(133)
+        plt.plot(self.data3)
         plt.show()
 
                 
     def filterData(self):
-        ##b,a = signal.butter(3,0.5,analog = False)
-##        b = [1,-1]
-##        a = [1,0.9]
-##        butter1 = (signal.filtfilt(b,a,self.data1))
-##        butter2 = (signal.filtfilt(b,a,self.data2))
-##        butter3 = (signal.filtfilt(b,a,self.data3))
-##
-##        butter1 = [(x - self.xShift)/16384 for x in butter1]
-##        butter1Shift = [(x/x) - 1 if (abs(x) < self.xBound) else x for x in butter1]
-##
-##        ## butter1Shift = runningAverage(butter1Shift)
-##
-##        butter2 = [(y - self.yShift)/-16384 for y in butter2]
-##        butter2Shift = [(y/y) - 1 if (abs(y) < self.yBound) else y for y in butter2]
-##
-##        butter3 = [(z - self.zShift)/-16384 for z in butter3]
-##        butter3Shift = [(z/z) - 1 if (abs(z) < self.zBound) else z for z in butter3]
-        butter1Shift = self.data1;
-        butter2Shift = self.data2;
-        butter3Shift = self.data3;
-        return butter1Shift, butter2Shift, butter3Shift
+        b,a = signal.butter(3,0.5,analog = False)
+        #b = [1,-1]
+        #a = [1,0.9]
+        butter1 = (signal.filtfilt(b,a,self.data1))
+        butter2 = (signal.filtfilt(b,a,self.data2))
+        butter3 = (signal.filtfilt(b,a,self.data3))
+
+        butter1 = [x / 16384.0 for x in butter1]
+        butter2 = [x / 16384.0 for x in butter2]
+        butter3 = [x / 16384.0 for x in butter3]
+        
+        return butter1, butter2, butter3
     
     def runningAverage(self,noisyData):
         smoothed = list()
@@ -142,21 +113,50 @@ class IMUPlot:
             shiftValue = maxVal - ((maxVal - minVal) / 2)
         return shiftValue
 
+axOff = list()
+ayOff = list()
+azOff = list()
+data1 = list()
+data2 = list()
+data3 = list()
 
-data1=list()
-data2=list()
-data3=list()
-maxX = 0
-minX = 4000
-N = 150
-trim = 10
+with open('CalibrationSignal.csv','rb') as csvDataFile:
+    csvReader = csv.reader(csvDataFile)
+    for row in csvReader:
+        axOff.append(float(row[0]))
+        ayOff.append(float(row[1]))
+        azOff.append(float(row[2]))
 
-with open('IMUData.csv','rb') as csvDataFile:
+with open('IMUDataFar_iD.csv','rb') as csvDataFile:
     csvReader = csv.reader(csvDataFile)
     for row in csvReader:
         data1.append(float(row[0]))
         data2.append(float(row[1]))
         data3.append(float(row[2]))
+        
+mpu = IMU()
+mpu.setTime(30.0)
+mpu.calcOffsets(axOff,ayOff,azOff)
+mpu.setAcceleration(data1,data2,data3)
+X,Y,Z = mpu.getAcceleration()
 
-dp = IMUPlot(data1,data2,data3,40.0)
-dp.plotData()
+plt.subplot(231)
+plt.plot(data1)
+plt.title("X Accelerometer Non-Filtered")
+plt.subplot(232)
+plt.plot(data2)
+plt.title("Y Accelerometer Non-Filtered")
+plt.subplot(233)
+plt.plot(data3)
+plt.title("Z Accelerometer Non-Filtered")
+plt.subplot(234)
+plt.plot(X)
+plt.title("X Accelerometer Filtered")
+plt.subplot(235)
+plt.plot(Y)
+plt.title("X Accelerometer Filtered")
+plt.subplot(236)
+plt.plot(Z)
+plt.title("X Accelerometer Filtered")
+
+plt.show()
