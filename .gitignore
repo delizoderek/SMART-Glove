@@ -1,2 +1,4 @@
 *.DS_Store
 *.whl
+Python/Test Scripts/IMU.pyc
+Python/Test Scripts/IMU.py
