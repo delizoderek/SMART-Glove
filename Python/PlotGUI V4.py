@@ -36,8 +36,12 @@ class Window(QtGui.QWidget):
             self.start = QtGui.QPushButton('Start',self)
             self.start.clicked.connect(self.handleStart)
 
+                # Stop button widget
+            self.stop = QtGui.QPushButton('Stop',self)
+            self.stop.clicked.connect(self.handleStop)
+            
                 # Update Plot widget
-            self.updatePlot = QtGui.QPushButton('Update Plot',self)
+            self.updatePlot = QtGui.QPushButton('Load from CSV',self)
             self.updatePlot.clicked.connect(self.handleUpdate)
             
                 # Instructions button widget
@@ -59,11 +63,16 @@ class Window(QtGui.QWidget):
                 #Calibration button widget
             self.calibration = QtGui.QPushButton('Glove Calibration',self)
             self.calibration.clicked.connect(self.handleCalibration)
+
+                #Pressure sensor level widget
+            self.pressureLevel = QtGui.QPushButton('Set Pressure Level',self)
+            self.pressureLevel.clicked.connect(self.handlePressure)
+                #Pressure second window that opens
+            self.pressureWindow = Pres(self) #Calls the Version window class
             
                 # Text widget: Will dispray number of taps
-            self.tapData = QtGui.QLineEdit('Tap Data:')
-            #self.tapData.setMinimumSize(1,1)
-            self.tapData.setDisabled(True)
+            self.elapsedTime = QtGui.QLineEdit('Time Elapsed: ')
+            self.elapsedTime.setDisabled(True)
             
                 # 3D Graph Plot Widget
             self.plot = gl.GLViewWidget()
@@ -110,13 +119,15 @@ class Window(QtGui.QWidget):
             layout = QtGui.QGridLayout()
             self.setLayout(layout)
             layout.addWidget(self.start, 0, 0, 1, 2)          ## Start button
-            layout.addWidget(self.updatePlot, 1, 0, 1, 2)
-            layout.addWidget(self.instructions, 2 , 0, 1, 2)  ## Instructions button
-            layout.addWidget(self.debug, 3, 0, 1 , 2)         ## Debug button
-            layout.addWidget(self.version, 4, 0, 1, 2)        ## Version button
-            layout.addWidget(self.calibration, 5, 0, 1, 2)
-            layout.addWidget(self.tapData, 6, 0, 1, 2)         ## tapData text display
-            layout.addWidget(self.plot, 0, 6, 6, 6)           ##3D Plotting
+            layout.addWidget(self.stop, 1, 0, 1, 2)
+            layout.addWidget(self.updatePlot, 2, 0, 1, 2)     ## Update Plot button
+            layout.addWidget(self.instructions, 3, 0, 1, 2)   ## Instructions button
+            layout.addWidget(self.debug, 4, 0, 1 , 2)         ## Debug button
+            layout.addWidget(self.version, 5, 0, 1, 2)        ## Version button
+            layout.addWidget(self.calibration, 6, 0, 1, 2)    ## Calibration button
+            layout.addWidget(self.pressureLevel, 7, 0, 1, 2)       ## Pressure sensor button  
+            layout.addWidget(self.elapsedTime, 8, 0, 1, 2)         ## tapData text display
+            layout.addWidget(self.plot, 1, 7, 7, 7)           ##3D Plotting
             
             
 ##### Widget event handling #####
@@ -134,32 +145,27 @@ class Window(QtGui.QWidget):
             data1 = list()
             data2 = list()
             data3 = list()
-##            with open('Test.csv','rU') as csvDataFile:
-##                csvReader = csv.reader(csvDataFile)
-##                for row in csvReader:
-##                    if float(row[0]) == 0:
-##                        print float(row[0])
-##                        
-##                    data1.append(float(row[0]))
-##                    data2.append(float(row[1]))
-##                    data3.append(float(row[2]))
-##
-##            #Code to collect max values from csv
-##            max1 = max(data1)
-##            max2 = max(data2)
-##            max3 = max(data3)
-##            max4 = max(max1, max2, max3)
-##            n = 500
-##            self.x = data1
-##            self.y = data2
-##            self.z = data3
-##            
-            #For plot scaling
+            with open('Test.csv','rU') as csvDataFile:
+                csvReader = csv.reader(csvDataFile)
+                for row in csvReader:
+                    if float(row[0]) == 0:
+                        print float(row[0])
+                        
+                    data1.append(float(row[0]))
+                    data2.append(float(row[1]))
+                    data3.append(float(row[2]))
+
+            #Code to collect max values from csv
+            max1 = max(data1)
+            max2 = max(data2)
+            max3 = max(data3)
+            max4 = max(max1, max2, max3)
             n = 500
-            self.x = data1.append(0)
-            self.y = data2.append(0)
-            self.z = data3.append(0)
-            max4 = 40
+            self.x = data1
+            self.y = data2
+            self.z = data3
+            
+            #For plot scaling
             maxValue = max4/20
             setX = maxValue
             setY = maxValue
@@ -167,7 +173,6 @@ class Window(QtGui.QWidget):
 
             #create Axis
             self.axis = gl.GLAxisItem()
-##            self.axis.setSize(x = max4,y = max4,z = max4)
             self.axis.setSize(x = max4,y = max4,z = max4)
             self.plot.addItem(self.axis)
             
@@ -198,6 +203,12 @@ class Window(QtGui.QWidget):
             self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
     
             
+            
+            
+            # Stop button event handling
+        def handleStop(self):
+            print('Stop')    
+
             # Update Plot button event handling
         def handleUpdate(self):
             #This will reinitialize the plot and data points    
@@ -285,7 +296,12 @@ class Window(QtGui.QWidget):
             #Calibration button event handling
         def handleCalibration(self):
             print('Calibrating')
-            
+
+            # Pressure Sensor Level event handling
+        def handlePressure(self):
+            self.pressureWindow.show() #This will open the pressure sensor window
+
+       
 ############### Addional classes that are used ###############
             
 ##### Insert Start class for actions here #####
@@ -319,10 +335,49 @@ class Vers(QtGui.QWidget):
             
                 # What is within the window that opens
             self.text = QtGui.QPlainTextEdit(self) 
-            self.text.setPlainText('Version: Alpha 0.1.0')
+            self.text.setPlainText('Version: Alpha 0.1.1')
             self.text.setDisabled(True) # setDiabled = true will disable the text edit
            
+##### Pressure class to open new window and diaplay whatever actions that are needed #####
+class Pres(QtGui.QWidget):
+        def __init__(self,parent = None):
+            QtGui.QWidget.__init__(self)
+            self.setWindowTitle('Pressure Sensor Level')
+            self.setMinimumSize(225,225)
+            self.setMaximumSize(225,225)
+
+            #Within the window that opens
+            self.text = QtGui.QPlainTextEdit(self)
+            self.text.setPlainText('Set the Pressure Sensor Level \n1=Low, 2=Middle, 3=High')
+            self.text.setDisabled(True)
+            
+            self.level1 = QtGui.QPushButton('Level 1', self)
+            self.level1.clicked.connect(self.handleLevelOne)
+
+            self.level2 = QtGui.QPushButton('Level 2', self)
+            self.level2.clicked.connect(self.handleLevelTwo)
+
+            self.level3 = QtGui.QPushButton('Level 3',self)
+            self.level3.clicked.connect(self.handleLevelThree)
                 
+            # Pres Widget layout
+            layout = QtGui.QGridLayout()
+            self.setLayout(layout)
+            layout.addWidget(self.text,0, 0, 5, 2)
+            layout.addWidget(self.level1, 2, 0, 1, 2)
+            layout.addWidget(self.level2, 3, 0, 1, 2)
+            layout.addWidget(self.level3, 4, 0, 1, 2)
+            
+            # Pressure Level 1 event handling
+        def handleLevelOne(self):
+                print('test')
+            # Pressure Level 2 event handling
+        def handleLevelTwo(self):
+                print('test2')
+            # Pressure Level 3 event handling
+        def handleLevelThree(self):
+                print('test3')
+            
 ############### Initation code ###############
 if __name__ == '__main__': 
     import sys
@@ -333,4 +388,4 @@ if __name__ == '__main__':
     w.show()
     sys.exit(app.exec_())
 
-        
+ 
