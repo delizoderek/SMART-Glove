@@ -16,14 +16,14 @@ data3 = list()
 originTap = list()
 
 
-with open('..\Data\CalibrationSignal.csv','rb') as csvDataFile:
+with open('CalibrationSignal.csv','rb') as csvDataFile:
     csvReader = csv.reader(csvDataFile)
     for row in csvReader:
         axOff.append(float(row[0]))
         ayOff.append(float(row[1]))
         azOff.append(float(row[2]))
 
-with open('..\Data\IMUData60cm_x.csv','rb') as csvDataFile:
+with open('IMUData60cm_x.csv','rb') as csvDataFile:
     csvReader = csv.reader(csvDataFile)
     for row in csvReader:
         data1.append(float(row[0]))
@@ -31,35 +31,36 @@ with open('..\Data\IMUData60cm_x.csv','rb') as csvDataFile:
         data3.append(float(row[2]))
         originTap.append(int(row[6]))
         
-interval = 30.0     
+
+##x_vel = integrate.cumtrapz(t, Ax, initial=0)
+##x_Trap = integrate.cumtrapz(t,x_vel, initial=0)
 mpu = IMU()
-mpu.setTime(interval)
-idx = mpu.originIndices(originTap)
 mpu.calcOffsets(axOff,ayOff,azOff)
+mpu.setTime(30.0)
 mpu.setAcceleration(data1,data2,data3)
 Ax,Ay,Az = mpu.getAcceleration()
-
-t = np.array(mpu.time)
-x_vel = integrate.cumtrapz(t, Ax, initial=0)
-x_Trap = integrate.cumtrapz(t,x_vel, initial=0)
-f = interpolate.interp1d(t, Ax)
-x_vel = [0]
 totalSum = 0
 dt = len(Ax) / 30.0
+
+t = mpu.time
+
 x_vel = [sum(Ax[:i]) * -dt for i in range(len(Ax))]
 x_pos = [sum(x_vel[:i]) * dt for i in range(len(x_vel))]
-
-x2_vel,y2_vel,z2_vel = mpu.getVelocity()
-x2_pos,y2_pos,z2_pos = mpu.getPosition()
-print x2_pos
     
-##y_vel = integrate.cumtrapz(t, y, initial=0)
-##y_pos = integrate.cumtrapz(y_vel,t, initial=0)
-##
-##z_vel = integrate.cumtrapz(t, z, initial=0)
-##z_pos = integrate.cumtrapz(z_vel,t, initial=0)
+y_vel = [sum(Ay[:i]) * dt for i in range(len(Ay))]
+y_pos = [sum(y_vel[:i]) * dt for i in range(len(y_vel))]
 
-#x_pos = mpu.reduceError(x_pos,y_pos,z_pos)
+z_vel = [sum(Az[:i]) * -dt for i in range(len(Az))]
+z_pos = [sum(z_vel[:i]) * dt for i in range(len(z_vel))]
+##x_vel = [sum(Ax[:i]) * -dt for i in range(len(Ax))]
+##x_pos = [sum(x_vel[:i]) * dt for i in range(len(x_vel))]
+##    
+##y_vel = [sum(Ay[:i]) * dt for i in range(len(Ay))]
+##y_pos = [sum(y_vel[:i]) * dt for i in range(len(y_vel))]
+##
+##z_vel = [sum(Az[:i]) * -dt for i in range(len(Az))]
+##z_pos = [sum(z_vel[:i]) * dt for i in range(len(z_vel))]
+
 
 ##plt.plot(x_pos,y_pos)
 ##print idx
@@ -70,8 +71,87 @@ print x2_pos
 ##        for n in range(idx[i],idx[i+1]):
 ##            x_pos[n] = 0
 ##fc = 0.1
-plt.subplot(211)
-plt.plot(t,x2_pos)
-plt.subplot(212)
+plt.figure(1)
+plt.subplot(331)
+plt.plot(t,Ax)
+plt.title("X Acceleration Not-Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.subplot(332)
+plt.plot(t,Ay)
+plt.title("Y Acceleration Not-Bounded")
+plt.subplot(333)
+plt.plot(t,Az)
+plt.title("Z Acceleration Not-Bounded")
+plt.subplot(334)
+plt.plot(t,x_vel)
+plt.title("X Velocity Not-Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.subplot(335)
+plt.plot(t,y_vel)
+plt.title("Y Velocity Not-Bounded")
+plt.subplot(336)
+plt.plot(t,z_vel)
+plt.title("Z Velocity Not-Bounded")
+plt.subplot(337)
 plt.plot(t,x_pos)
+plt.title("X Position Not-Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.xlabel("Time (sec)")
+plt.subplot(338)
+plt.plot(t,y_pos)
+plt.title("Y Position Not-Bounded")
+plt.xlabel("Time (sec)")
+plt.subplot(339)
+plt.plot(t,z_pos)
+plt.title("Z Position Not-Bounded")
+plt.xlabel("Time (sec)")
+
+mpu.applyBounding()
+
+Ax,Ay,Az = mpu.getAcceleration()
+
+x_vel = [sum(Ax[:i]) * -dt for i in range(len(Ax))]
+x_pos = [sum(x_vel[:i]) * dt for i in range(len(x_vel))]
+    
+y_vel = [sum(Ay[:i]) * dt for i in range(len(Ay))]
+y_pos = [sum(y_vel[:i]) * dt for i in range(len(y_vel))]
+
+z_vel = [sum(Az[:i]) * -dt for i in range(len(Az))]
+z_pos = [sum(z_vel[:i]) * dt for i in range(len(z_vel))]
+
+
+plt.figure(2)
+plt.subplot(331)
+plt.plot(t,Ax)
+plt.title("X Acceleration Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.subplot(332)
+plt.plot(t,Ay)
+plt.title("Y Acceleration Bounded")
+plt.subplot(333)
+plt.plot(t,Az)
+plt.title("Z Acceleration Bounded")
+plt.subplot(334)
+plt.plot(t,x_vel)
+plt.title("X Velocity Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.subplot(335)
+plt.plot(t,y_vel)
+plt.title("Y Velocity Bounded")
+plt.subplot(336)
+plt.plot(t,z_vel)
+plt.title("Z Velocity Bounded")
+plt.subplot(337)
+plt.plot(t,x_pos)
+plt.title("X Position Bounded")
+plt.ylabel("Amplitude (m/s^2)")
+plt.xlabel("Time (sec)")
+plt.subplot(338)
+plt.plot(t,y_pos)
+plt.title("Y Position Bounded")
+plt.xlabel("Time (sec)")
+plt.subplot(339)
+plt.plot(t,z_pos)
+plt.title("Z Position Bounded")
+plt.xlabel("Time (sec)")
 plt.show()

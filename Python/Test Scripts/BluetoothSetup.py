@@ -18,7 +18,7 @@ xCal = list()
 yCal = list()
 zCal = list()
 
-with open('CalibrationSignal.csv','rb') as csvDataFile:
+with open('..\Data\CalibrationSignal.csv','rb') as csvDataFile:
     csvReader = csv.reader(csvDataFile)
     for row in csvReader:
         xCal.append(float(row[0]))

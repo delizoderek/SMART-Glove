@@ -41,9 +41,6 @@ class IMU:
         Ax = [x - self.axShift for x in Ax]
         Ay = [y - self.ayShift for y in Ay]
         Az = [z - self.azShift for z in Az]
-        Ax = [x*0 if abs(x) < self.xBound else x for x in Ax]
-        Ay = [y*0 if abs(y) < self.yBound else y for y in Ay]
-        Az = [z*0 if abs(z) < self.zBound else z for z in Az]
         Ax = [x / 16384 for x in Ax]
         Ay = [y / 16384 for y in Ay]
         Az = [z / 16384 for z in Az]
@@ -52,6 +49,11 @@ class IMU:
         self.ay = Ay
         self.az = Az
 
+    def applyBounding(self):
+        self.ax = [x*0 if abs(x) < self.xBound / 16384 else x for x in self.ax]
+        self.ay = [y*0 if abs(y) < self.yBound / 16384 else y for y in self.ay]
+        self.az = [z*0 if abs(z) < self.zBound / 16384 else z for z in self.az]
+    
     def originIndices(self,originTracker):
         indices = list()
         n = 0
