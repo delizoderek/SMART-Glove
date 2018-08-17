@@ -1,5 +1,5 @@
 ################################################################################
-# Kevin Chung, Derek DeLizo                                                    #
+# Kevin Chung                                                                  #
 #                                                                              #
 # Capstone Project: SMART Glove                                                #
 #                                                                              #
@@ -15,12 +15,7 @@ import pyqtgraph.opengl as gl
 import numpy as np
 from pyqtgraph.Qt import QtCore,QtGui
 import csv
-import serial
-import time
 import Tkinter
-from IMU import IMU
-import thread
-from multiprocessing.pool import ThreadPool
 
 ############### Main window class: What holds all the widgets ###############
 class Window(QtGui.QWidget):
@@ -28,7 +23,6 @@ class Window(QtGui.QWidget):
             self.x = list()
             self.y = list()
             self.z = list()
-            self.stopThread = False
             self.initialize()
 
         def initialize(self):
@@ -138,59 +132,29 @@ class Window(QtGui.QWidget):
             
 ##### Widget event handling #####
             # This is the event handing for the start button
-
-        def btData(self,ser):
-            ser.write("t")
-            recordedData = []
-            end = 0.0
-            start = time.time()
-            while self.stopThread == False:
-                dataIn = []
-                val = ser.read()
-                while val != '_':
-                    dataIn.append(val)
-                    val = ser.read()
-                    
-                if dataIn[0] == '\x00':
-                    dataIn = dataIn[1:]
-                    
-                parsedData = ''.join(dataIn)
-                recordedData.append(parsedData)
-                end = time.time()
-                
-
-            dt = (end - start)
-            print "Completed in %s seconds" % (dt)
-            ser.write("d")
-            data1 = list()
-            data2 = list()
-            data3 = list()
-
-            with open('Data\IMUData.csv','wb') as file:
-                for line in recordedData:
-                    temp = line.split(',')
-                    data1.append(float(temp[0]))
-                    data2.append(float(temp[1]))
-                    data3.append(float(temp[2]))
-                    file.write(line)
-                    file.write('\n')
-
-                file.close()
-            ser.write("d")
-                
-            self.plotData(data1,data2,data3)
-
+                             
         def handleStart(self):
+            #This will reinitialize the plot and data points    
             self.plot.removeItem(self.xgrid)
             self.plot.removeItem(self.ygrid)
             self.plot.removeItem(self.zgrid)
             self.plot.removeItem(self.axis)
             self.plot.removeItem(self.plt)
-##            TOUT = 10
-##            ser = serial.Serial("COM11",9600,timeout = TOUT)
-##            print "Connected"
-##            thread.start_new_thread( self.btData, (ser,) )
-##            
+            print "hello"
+            #Code Reads from CSV, and creates data points
+            data1 = list()
+            data2 = list()
+            data3 = list()
+            with open('Test.csv','rU') as csvDataFile:
+                csvReader = csv.reader(csvDataFile)
+                for row in csvReader:
+                    if float(row[0]) == 0:
+                        print float(row[0])
+                        
+                    data1.append(float(row[0]))
+                    data2.append(float(row[1]))
+                    data3.append(float(row[2]))
+
             #Code to collect max values from csv
             max1 = max(data1)
             max2 = max(data2)
@@ -237,11 +201,13 @@ class Window(QtGui.QWidget):
             self.plt = gl.GLLinePlotItem(pos=self.pts, color=pg.glColor((1,n*1.3)), width=10., antialias=True)
         
             self.plot.addItem(self.plt) #Plots CSV data onto 3D plot
+    
+            
             
             
             # Stop button event handling
         def handleStop(self):
-            self.stopThread = True
+            print('Stop')    
 
             # Update Plot button event handling
         def handleUpdate(self):
@@ -256,7 +222,7 @@ class Window(QtGui.QWidget):
             data1 = list()
             data2 = list()
             data3 = list()
-            with open('Data\IMUData.csv','rU') as csvDataFile:
+            with open('Test.csv','rU') as csvDataFile:
                 csvReader = csv.reader(csvDataFile)
                 for row in csvReader:
                     if float(row[0]) == 0:
@@ -267,7 +233,7 @@ class Window(QtGui.QWidget):
                     data3.append(float(row[2]))
         
             #Code to collect max values from csv
-            #data1.reverse()
+            data1.reverse()
             max1 = max(data1)
             max2 = max(data2)
             max3 = max(data3)
