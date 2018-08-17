@@ -140,7 +140,7 @@ class Window(QtGui.QWidget):
             self.plot.removeItem(self.zgrid)
             self.plot.removeItem(self.axis)
             self.plot.removeItem(self.plt)
-        
+            print "hello"
             #Code Reads from CSV, and creates data points
             data1 = list()
             data2 = list()
